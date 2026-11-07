@@ -1,0 +1,25 @@
+# BIST hisse listesini haftalık yeniler (yeni halka arzlar eklenir, işlem sırası kapananlar çıkar).
+name: update-bist-list
+on:
+  schedule:
+    - cron: '0 5 * * 0'   # her pazar sabahı
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node bist-list.mjs
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add bist-symbols.txt data
+          git diff --cached --quiet || (git commit -m "bist listesi guncellendi" && git pull --rebase && git push)
