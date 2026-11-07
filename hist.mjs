@@ -1,9 +1,9 @@
-// Günlük mum (1 yıl) -> data/h/   |   Gün içi 5 dakikalık mum (son seans) -> data/i/
+// Günlük mum (5 yıl) -> data/h/  |   Gün içi 5 dakikalık mum (son seans) -> data/i/
 // Önce update.mjs ile data/bist.json ve data/nasdaq.json oluşmuş olmalı.
 import fs from 'node:fs';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const jobs = { bist: { suffix: '.IS', top: 1000 }, nasdaq: { suffix: '', top: 300 } };  // NASDAQ'ta en yüksek işlem hacimli 300 hisse
-const sets = [['1y', '1d', 'h'], ['1d', '5m', 'i']];
+const sets = [['5y', '1d', 'h'], ['1d', '5m', 'i']];
 
 for (const [mk, { suffix, top }] of Object.entries(jobs)) {
   const d = JSON.parse(fs.readFileSync(`data/${mk}.json`, 'utf8'));

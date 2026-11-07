@@ -1,0 +1,27 @@
+# Hisse x emtia hassasiyet analizi. Günlük geçmiş güncellendikten sonra otomatik çalışır.
+name: update-sensitivity
+on:
+  workflow_run:
+    workflows: [update-history]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node sensitivity.mjs
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add data
+          git diff --cached --quiet || (git commit -m "hassasiyet guncellendi" && git pull --rebase && git push)

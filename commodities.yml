@@ -1,0 +1,25 @@
+# Emtia, döviz, kripto ve endeks verisi. Emtialar neredeyse 7/24 işlem gördüğü için saatlik güncellenir.
+name: update-commodities
+on:
+  schedule:
+    - cron: '10 * * * 1-5'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node commodities.mjs
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add data
+          git diff --cached --quiet || (git commit -m "emtia guncellendi" && git pull --rebase && git push)

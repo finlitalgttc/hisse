@@ -1,0 +1,29 @@
+# Bu dosyayı repoda şu yola koy: .github/workflows/update.yml
+name: update-data
+on:
+  schedule:
+    - cron: '*/20 7-15 * * 1-5'   # BIST saatleri (UTC), 20 dakikada bir
+    - cron: '0 14-21 * * 1-5'     # NASDAQ saatleri (UTC), saatlik
+  workflow_dispatch:
+    inputs:
+      market:
+        description: bist veya nasdaq
+        default: bist
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node update.mjs ${{ github.event.inputs.market || (github.event.schedule == '0 14-21 * * 1-5' && 'nasdaq' || 'bist') }}
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add data
+          git diff --cached --quiet || (git commit -m "veri guncellendi" && git pull --rebase && git push)
