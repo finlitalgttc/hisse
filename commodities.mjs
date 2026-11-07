@@ -24,15 +24,10 @@ export const ITEMS = [
   ['COTTON',   'Pamuk',             'Tarım',   'CT=F',     '¢/lb'],
   ['USDTRY',   'USD / TRY',         'Döviz',   'USDTRY=X', '₺'],
   ['EURTRY',   'EUR / TRY',         'Döviz',   'EURTRY=X', '₺'],
-  ['GBPTRY',   'GBP / TRY',         'Döviz',   'GBPTRY=X', '₺'],
-  ['EURUSD',   'EUR / USD',         'Döviz',   'EURUSD=X', '$'],
   ['BTC',      'Bitcoin',           'Kripto',  'BTC-USD',  '$'],
-  ['ETH',      'Ethereum',          'Kripto',  'ETH-USD',  '$'],
   ['BIST100',  'BIST 100',          'Endeks',  'XU100.IS', 'puan'],
-  ['BIST30',   'BIST 30',           'Endeks',  'XU030.IS', 'puan'],
   ['SP500',    'S&P 500',           'Endeks',  '^GSPC',    'puan'],
   ['NASDAQ100','NASDAQ 100',        'Endeks',  '^NDX',     'puan'],
-  ['DAX',      'DAX',               'Endeks',  '^GDAXI',   'puan'],
 ];
 const OZ = 31.1035;   // 1 troy ons = 31,1035 gram
 
@@ -67,7 +62,10 @@ function chgBack(rows, n) {
 function quoteFrom(id, name, group, unit, meta, daily) {
   const p = meta?.regularMarketPrice ?? daily.at(-1)?.[4];
   if (p == null) return null;
-  const prev = meta?.chartPreviousClose ?? meta?.previousClose ?? (daily.length > 1 ? daily.at(-2)[4] : null);
+  // Not: range=5y iken Yahoo'nun chartPreviousClose değeri 5 yıl önceki kapanıştır, günlük değişim için kullanılamaz.
+  // Son günlük mum bugünün (güncel) mumuysa önceki kapanış bir öncekidir, değilse son mumun kendisidir.
+  const last = daily.at(-1)?.[4], live = last != null && Math.abs(last / p - 1) < 1e-4;
+  const prev = live ? (daily.length > 1 ? daily.at(-2)[4] : null) : (last ?? null);
   return {
     sym: id, name, group, unit, cur: meta?.currency || '',
     price: p, prev, chg: prev ? (p / prev - 1) * 100 : 0,
