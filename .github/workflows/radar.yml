@@ -1,0 +1,27 @@
+# Bu dosyayı repoda şu yola koy: .github/workflows/radar.yml
+name: update-radar
+on:
+  schedule:
+    - cron: '45 22 * * 1-5'   # update-history (22:00) ve update-signals (22:30) bittikten sonra
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node engine.mjs
+      - run: node brief.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # isteğe bağlı: yoksa şablon özet kullanılır
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add data
+          git diff --cached --quiet || (git commit -m "radar guncellendi" && git pull --rebase && git push)
