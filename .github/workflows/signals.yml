@@ -1,0 +1,24 @@
+# Bu dosyayı repoda şu yola koy: .github/workflows/signals.yml
+name: update-signals
+on:
+  schedule:
+    - cron: '30 22 * * 1-5'   # update-history bittikten sonra
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-push
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node signals.mjs
+      - run: |
+          git config user.name bot
+          git config user.email bot@users.noreply.github.com
+          git add data
+          git diff --cached --quiet || (git commit -m "sinyaller guncellendi" && git pull --rebase && git push)
